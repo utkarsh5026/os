@@ -44,3 +44,57 @@ func (rw *ReaderWriterMutex) WriteLock() {
 func (rw *ReaderWriterMutex) WriteUnlock() {
 	rw.writeMutex.Unlock()
 }
+
+type ReaderWriterMutexWithoutStarvation struct {
+	readers      int
+	writersQueue int
+	cond         *sync.Cond
+	writing      bool
+}
+
+func NewReaderWriterMutexWithoutStarvation() *ReaderWriterMutexWithoutStarvation {
+	return &ReaderWriterMutexWithoutStarvation{
+		cond: sync.NewCond(&sync.Mutex{}),
+	}
+}
+
+func (rw *ReaderWriterMutexWithoutStarvation) ReadLock() {
+	rw.cond.L.Lock()
+	for rw.writing || rw.writersQueue > 0 {
+		rw.cond.Wait()
+	}
+
+	rw.readers++
+	rw.cond.L.Unlock()
+}
+
+func (rw *ReaderWriterMutexWithoutStarvation) ReadUnlock() {
+	rw.cond.L.Lock()
+	rw.readers--
+
+	if rw.readers == 0 {
+		rw.cond.Broadcast()
+	}
+
+	rw.cond.L.Unlock()
+}
+
+func (rw *ReaderWriterMutexWithoutStarvation) WriteLock() {
+	rw.cond.L.Lock()
+
+	rw.writersQueue++
+	for rw.writing || rw.readers > 0 {
+		rw.cond.Wait()
+	}
+
+	rw.writersQueue--
+	rw.writing = true
+	rw.cond.L.Unlock()
+}
+
+func (rw *ReaderWriterMutexWithoutStarvation) WriteUnlock() {
+	rw.cond.L.Lock()
+	rw.writing = false
+	rw.cond.Broadcast()
+	rw.cond.L.Unlock()
+}
