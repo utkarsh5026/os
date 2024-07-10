@@ -182,9 +182,7 @@ Imagine you are using a computer to play a game. Here’s how the PCB is utilize
 - **Prioritized Scheduling:** Implement advanced scheduling algorithms that prioritize critical processes.
 - **Concurrency Control:** Employ robust mechanisms to ensure consistent and synchronized PCB updates.
 
-14. **Explain how PCBs assist in handling process synchronization and communication. 🔗****Answer:**PCBs store information about synchronization mechanisms (like semaphores and mutexes) and communication channels (like message queues and shared memory). This information helps the OS manage and coordinate processes, ensuring they operate smoothly and share data correctly without conflicts.
+14. **Explain how PCBs assist in handling process synchronization and communication. 🔗Answer:**PCBs store information about synchronization mechanisms (like semaphores and mutexes) and communication channels (like message queues and shared memory). This information helps the OS manage and coordinate processes, ensuring they operate smoothly and share data correctly without conflicts.
 15. **How does the PCB help in handling process creation and termination? 🛠️**
     **Answer:**
     During process creation, the OS initializes a new PCB with all the necessary information for the new process. During termination, the OS updates the PCB to reflect the process’s exit state and reclaims resources allocated to the process. This ensures that the OS can manage processes lifecycle efficiently.
-
-I hope these detailed and simplified explanations help you in your interview preparation! If you need more questions or further clarification, feel free to ask. 😊👍
