@@ -28,27 +28,52 @@ A process is a fundamental concept in operating systems. It represents a program
 
 ---
 
-#### Process States
+---
+
+#### **Process States** 🏷️
 
 A process can be in one of several states during its lifecycle:
 
 1. **New** 🌱
-
-   - The process is being created.
+   * **Definition** : The process is being created.
+   * **Actions** : OS allocates resources (memory, PID, etc.) and initializes the process control block (PCB).
 2. **Ready** 🎬
-
-   - The process is ready to run but waiting for CPU allocation.
+   * **Definition** : The process is ready to run and waiting for CPU allocation.
+   * **Actions** : Placed in the ready queue, waiting for the scheduler to dispatch it.
 3. **Running** 🏃‍♂️
-
-   - The process is currently being executed by the CPU.
-4. **Waiting** ⏳
-
-   - The process is waiting for some event to occur (e.g., I/O completion).
+   * **Definition** : The process is currently being executed by the CPU.
+   * **Actions** : The CPU executes the process instructions.
+4. **Waiting (Blocked)** ⏳
+   * **Definition** : The process is waiting for some event to occur (e.g., I/O completion, resource availability).
+   * **Actions** : Placed in a waiting queue, waiting for the event to be signaled.
 5. **Terminated** 🛑
-
-   - The process has finished execution.
+   * **Definition** : The process has finished execution.
+   * **Actions** : OS deallocates resources and removes the process from the process table.
 
 ---
+
+#### **State Transitions** 🔄
+
+Processes transition between states based on various events and conditions:
+
+1. **New -> Ready** 🌱➡️🎬
+   * **Event** : Process creation is complete.
+   * **Action** : Process is moved to the ready queue.
+2. **Ready -> Running** 🎬➡️🏃‍♂️
+   * **Event** : CPU scheduler selects the process for execution.
+   * **Action** : Process state is changed to running.
+3. **Running -> Waiting** 🏃‍♂️➡️⏳
+   * **Event** : Process requests I/O or waits for a resource.
+   * **Action** : Process is moved to the waiting queue.
+4. **Running -> Ready** 🏃‍♂️➡️🎬
+   * **Event** : Process is preempted by the scheduler (e.g., time slice expiration).
+   * **Action** : Process state is changed to ready and placed back in the ready queue.
+5. **Waiting -> Ready** ⏳➡️🎬
+   * **Event** : I/O operation completes or resource becomes available.
+   * **Action** : Process is moved to the ready queue.
+6. **Running -> Terminated** 🏃‍♂️➡️🛑
+   * **Event** : Process completes its execution or is killed.
+   * **Action** : Process state is changed to terminated.
 
 #### Process Lifecycle
 
