@@ -1,10 +1,10 @@
-### Threads in Java 🧵
+# Threads in Java 🧵
 
 Threads in Java are essential for building concurrent applications. Java provides a robust and easy-to-use model for multithreading, allowing developers to create applications that can perform multiple tasks simultaneously. Let's explore everything you need to know about threads in Java.
 
 ---
 
-![1720637232298](image/threads/1720637232298.png)
+![1720637232298](image/threads/1720637232298.png "Thread in os")
 
 #### Definition
 
@@ -355,4 +355,158 @@ Java provides the `Executor` framework to manage a pool of worker threads.
 
 ---
 
-Understanding threads in Java is crucial for developing efficient, responsive, and high-performance applications. If you have any questions or need further explanations, feel free to ask!
+# Multithreading Models in Operating Systems 🧵
+
+Multithreading models describe how user-level threads are mapped to kernel-level threads. Understanding these models is crucial for designing efficient multithreaded applications and optimizing resource utilization. Let's explore the different multithreading models in detail.
+
+---
+
+#### Types of Multithreading Models
+
+1. **Many-to-One Model** 🕸️
+2. **One-to-One Model** 🌐
+3. **Many-to-Many Model** 🔄
+
+---
+
+### 1. Many-to-One Model 🕸️
+
+**Mechanism**:
+
+- Maps many user-level threads to a single kernel thread.
+- All user threads are managed by a single thread in the kernel.
+- The thread management is performed in user space by a thread library, not by the kernel.
+
+**Advantages**:
+
+- Efficient in terms of thread creation and management.
+- No need for kernel mode switching, making it faster.
+
+**Disadvantages**:
+
+- If one thread makes a blocking system call, the entire process is blocked.
+- Cannot run in parallel on a multiprocessor system because only one kernel thread is used.
+
+**Example**:
+
+- The Green Threads library in early Java versions used this model.
+- Pthreads library can be implemented on systems like Solaris using this model.
+
+**Diagram**:
+
+```plaintext
+User Threads: T1 T2 T3
+Kernel Thread: KT1
+```
+
+### 2. One-to-One Model 🌐
+
+**Mechanism**:
+
+- Maps each user-level thread to a kernel thread.
+- Allows multiple threads within the same process to run in parallel on multiple processors.
+
+**Advantages**:
+
+- More concurrency as each thread is treated independently.
+- If one thread blocks, other threads can continue to execute.
+
+**Disadvantages**:
+
+- Higher overhead due to the need for creating a corresponding kernel thread for each user thread.
+- Limited by the number of threads that can be created because each user thread maps to a kernel thread.
+
+**Example**:
+
+- Windows operating system uses this model.
+- Linux and modern versions of Solaris also use this model.
+
+**Diagram**:
+
+```plaintext
+User Threads: T1 T2 T3
+Kernel Threads: KT1 KT2 KT3
+```
+
+### 3. Many-to-Many Model 🔄
+
+**Mechanism**:
+
+- Multiplexes many user-level threads to a smaller or equal number of kernel threads.
+- The number of kernel threads can be greater than or equal to the number of processors.
+
+**Advantages**:
+
+- Greater flexibility because the OS can create a sufficient number of kernel threads.
+- If one user thread blocks, the kernel can schedule another kernel thread to run another user thread.
+
+**Disadvantages**:
+
+- More complex to implement and manage.
+- Still requires a level of kernel-level threading support.
+
+**Example**:
+
+- Windows with the ThreadFiber package.
+- Some versions of the Solaris operating system.
+
+**Diagram**:
+
+```plaintext
+User Threads: T1 T2 T3 T4 T5
+Kernel Threads: KT1 KT2 KT3
+```
+
+---
+
+### Hybrid Model 🌐🔄
+
+**Mechanism**:
+
+- Combines aspects of the One-to-One and Many-to-Many models.
+- Allows some threads to be bound to kernel threads and some to be managed by a many-to-many model.
+
+**Advantages**:
+
+- Provides the benefits of both one-to-one and many-to-many models.
+- Optimizes for both concurrency and resource utilization.
+
+**Disadvantages**:
+
+- Complex to implement and manage.
+
+**Example**:
+
+- Windows operating system with certain configurations.
+- Some modern Unix-based operating systems.
+
+**Diagram**:
+
+```plaintext
+User Threads: T1 T2 T3
+Kernel Threads: KT1 KT2 KT3
+Some user threads directly mapped, some multiplexed.
+```
+
+---
+
+### Key Considerations
+
+1. **Thread Management Overhead**:
+
+   - Creating and managing kernel threads can be more expensive than managing user-level threads.
+   - The choice of model affects the overhead involved in thread management.
+2. **Concurrency and Performance**:
+
+   - The ability to run threads in parallel on multiple processors can significantly improve performance.
+   - One-to-One and Many-to-Many models offer better concurrency compared to the Many-to-One model.
+3. **System Support**:
+
+   - The underlying operating system must support the chosen multithreading model.
+   - Different operating systems may have different implementations and levels of support for these models.
+4. **Application Requirements**:
+
+   - The nature of the application (e.g., compute-intensive, I/O-bound) can influence the choice of threading model.
+   - Applications requiring high concurrency and responsiveness benefit from models that support better parallelism.
+
+---
