@@ -127,7 +127,6 @@ External fragmentation occurs when free memory is divided into small, non-contig
 
 #### Techniques to Solve External Fragmentation 🔄
 
-
 1. **Compaction 📏**:
 
    - **Definition**: Compaction involves moving allocated memory blocks to create larger contiguous blocks of free memory.
@@ -282,6 +281,7 @@ External fragmentation occurs when free memory is divided into small, non-contig
        manager.free(pages1)
        print(f"Freed pages {pages1}")
    ```
+
    This version of the code includes detailed comments that explain each part of the process, from initializing page table entries and the paging memory manager to allocating and freeing memory, as well as translating virtual addresses to physical addresses.
 3. **Segmentation ✂️**:
 
@@ -463,3 +463,342 @@ External fragmentation occurs when free memory is divided into small, non-contig
        block3 = pool.allocate()
        print(f"Allocated block {block3}")
    ```
+
+# Internal Fragmentation in Memory Management 🧩
+
+#### Key Concepts and Causes 📘
+
+1. **Definition**:
+
+   - **Internal Fragmentation**: The wasted space within an allocated memory block that arises because the block is larger than the requested memory. It occurs when memory is allocated in fixed-size blocks, and the allocated block is not fully utilized.
+   - **Example**: If a process requests 22 KB of memory and is allocated a 32 KB block, the 10 KB of unused space within that block represents internal fragmentation.
+2. **Causes**:
+
+   - **Fixed-Size Allocation**: When memory is divided into fixed-size blocks or pages, and the memory request does not perfectly fit into these blocks, leading to leftover space.
+   - **Paging**: In a paging system, memory is divided into pages (e.g., 4 KB each). If a process does not use the entire page, the unused portion results in internal fragmentation.
+   - **Buddy System**: Allocates memory in power-of-two sizes. If the requested size is not a power of two, the allocated block will be the next power of two, causing internal fragmentation.
+
+#### Consequences of Internal Fragmentation ⚠️
+
+1. **Wasted Memory**:
+
+   - **Inefficiency**: The unused space within allocated blocks results in inefficient memory utilization. Over time, this can add up to a significant amount of wasted memory.
+   - **Example**: If many processes have similar inefficiencies, the cumulative wasted memory can be substantial.
+2. **Reduced System Performance**:
+
+   - **Paging and Swapping**: Wasted memory reduces the total available memory for other processes, potentially leading to increased paging or swapping.
+   - **Example**: Frequent paging and swapping due to insufficient available memory can degrade overall system performance.
+
+#### Techniques to Mitigate Internal Fragmentation 🔄
+
+1. **Variable-Size Allocation**:
+
+   - **Concept**: Allocates memory blocks that closely match the requested size, reducing the amount of unused space.
+   - **Example**: Memory allocation techniques like best-fit, first-fit, and next-fit try to allocate memory blocks that are as close in size to the requested memory as possible.
+2. **Sub-Page Allocation**:
+
+   - **Concept**: Divides pages into smaller blocks to reduce internal fragmentation.
+   - **Example**: Allocating memory in sub-page units (e.g., 512 bytes) within a 4 KB page to better match the requested sizes.
+3. **Heap Management Algorithms**:
+
+   - **Concept**: Use sophisticated algorithms to manage dynamic memory allocation and reduce fragmentation.
+   - **Example**: Advanced heap management algorithms like slab allocation, which is used for managing memory for frequently used objects of different sizes, can help minimize internal fragmentation.
+
+#### Examples of Techniques to Mitigate Internal Fragmentation 🌟
+
+1. **Variable-Size Allocation**:
+
+   - **Best-Fit Allocation**: Allocates the smallest block that is large enough for the request, minimizing wasted space.
+   - **First-Fit Allocation**: Allocates the first block that is large enough, which may not always minimize fragmentation but is faster.
+   - **Next-Fit Allocation**: Similar to first-fit but starts searching from the last allocated block, potentially distributing fragmentation more evenly.
+2. **Sub-Page Allocation**:
+
+   - **Concept**: Within each page, memory can be further divided into smaller units to match the size of the requests more closely.
+   - **Example**: Instead of allocating whole pages to small objects, a sub-page allocator divides each page into smaller fixed-size blocks.
+3. **Slab Allocation**:
+
+   - **Concept**: Memory is divided into caches, each of which stores objects of a specific size.
+   - **Example**: Slab allocation is used in kernel memory allocation where objects of the same type are grouped into slabs. Each slab contains multiple objects, and the slab allocator efficiently manages free and allocated objects.
+
+
+
+Certainly! Here are the code implementations for various methods to solve internal fragmentation, each with meaningful comments explaining the process.
+
+### 1. Variable-Size Allocation
+
+**Best-Fit Allocation**:
+Allocates the smallest block that is large enough for the request.
+
+```python
+class MemoryBlock:
+    def __init__(self, start, size):
+        self.start = start
+        self.size = size
+        self.free = True
+
+class BestFitAllocator:
+    def __init__(self, total_memory):
+        self.total_memory = total_memory
+        self.memory_blocks = [MemoryBlock(0, total_memory)]
+
+    def allocate(self, size):
+        best_fit = None
+        for block in self.memory_blocks:
+            if block.free and block.size >= size:
+                if best_fit is None or block.size < best_fit.size:
+                    best_fit = block
+      
+        if best_fit is None:
+            raise MemoryError("No sufficient free memory available")
+      
+        if best_fit.size > size:
+            new_block = MemoryBlock(best_fit.start + size, best_fit.size - size)
+            self.memory_blocks.insert(self.memory_blocks.index(best_fit) + 1, new_block)
+        best_fit.size = size
+        best_fit.free = False
+        return best_fit.start
+
+    def free(self, address):
+        for block in self.memory_blocks:
+            if block.start == address:
+                block.free = True
+                self._merge_free_blocks()
+                return
+        raise ValueError("Invalid address")
+
+    def _merge_free_blocks(self):
+        merged_blocks = []
+        previous_block = None
+        for block in self.memory_blocks:
+            if previous_block and previous_block.free and block.free:
+                previous_block.size += block.size
+            else:
+                if previous_block:
+                    merged_blocks.append(previous_block)
+                previous_block = block
+        if previous_block:
+            merged_blocks.append(previous_block)
+        self.memory_blocks = merged_blocks
+
+# Example usage
+if __name__ == "__main__":
+    allocator = BestFitAllocator(1024)  # Initialize memory allocator with 1024 units of memory
+
+    # Allocate memory blocks
+    addr1 = allocator.allocate(100)
+    print(f"Allocated 100 units at address {addr1}")
+
+    addr2 = allocator.allocate(200)
+    print(f"Allocated 200 units at address {addr2}")
+
+    addr3 = allocator.allocate(50)
+    print(f"Allocated 50 units at address {addr3}")
+
+    # Free a memory block
+    allocator.free(addr1)
+    print(f"Freed 100 units from address {addr1}")
+
+    # Allocate another block to see the effect of best-fit allocation
+    addr4 = allocator.allocate(150)
+    print(f"Allocated 150 units at address {addr4}")
+```
+
+### 2. Sub-Page Allocation
+
+**Sub-Page Allocation**:
+Divides pages into smaller blocks to reduce internal fragmentation.
+
+```python
+class SubPageAllocator:
+    def __init__(self, page_size, sub_page_size, num_pages):
+        self.page_size = page_size
+        self.sub_page_size = sub_page_size
+        self.num_pages = num_pages
+        self.pages = [[None] * (page_size // sub_page_size) for _ in range(num_pages)]
+
+    def allocate(self, size):
+        num_sub_pages = (size + self.sub_page_size - 1) // self.sub_page_size  # Round up to nearest sub-page count
+        for page_index, page in enumerate(self.pages):
+            free_count = 0
+            for sub_page_index, sub_page in enumerate(page):
+                if sub_page is None:
+                    free_count += 1
+                    if free_count == num_sub_pages:
+                        start_index = sub_page_index - free_count + 1
+                        for i in range(start_index, start_index + num_sub_pages):
+                            page[i] = True
+                        return (page_index, start_index)
+                else:
+                    free_count = 0
+        raise MemoryError("No sufficient free memory available")
+
+    def free(self, page_index, start_index, size):
+        num_sub_pages = (size + self.sub_page_size - 1) // self.sub_page_size  # Round up to nearest sub-page count
+        for i in range(start_index, start_index + num_sub_pages):
+            self.pages[page_index][i] = None
+
+# Example usage
+if __name__ == "__main__":
+    allocator = SubPageAllocator(page_size=4096, sub_page_size=512, num_pages=16)  # Initialize with 4 KB pages and 512-byte sub-pages
+
+    # Allocate memory blocks
+    addr1 = allocator.allocate(1000)
+    print(f"Allocated 1000 bytes at page {addr1[0]}, sub-page {addr1[1]}")
+
+    addr2 = allocator.allocate(1500)
+    print(f"Allocated 1500 bytes at page {addr2[0]}, sub-page {addr2[1]}")
+
+    # Free a memory block
+    allocator.free(addr1[0], addr1[1], 1000)
+    print(f"Freed 1000 bytes from page {addr1[0]}, sub-page {addr1[1]}")
+
+    # Allocate another block to see the effect of sub-page allocation
+    addr3 = allocator.allocate(500)
+    print(f"Allocated 500 bytes at page {addr3[0]}, sub-page {addr3[1]}")
+```
+
+### 3. Heap Management Algorithms
+
+**Heap Management with First-Fit Allocation**:
+Uses the first-fit strategy to allocate memory blocks.
+
+```python
+class MemoryBlock:
+    def __init__(self, start, size):
+        self.start = start
+        self.size = size
+        self.free = True
+
+class FirstFitAllocator:
+    def __init__(self, total_memory):
+        self.total_memory = total_memory
+        self.memory_blocks = [MemoryBlock(0, total_memory)]
+
+    def allocate(self, size):
+        for block in self.memory_blocks:
+            if block.free and block.size >= size:
+                if block.size > size:
+                    new_block = MemoryBlock(block.start + size, block.size - size)
+                    self.memory_blocks.insert(self.memory_blocks.index(block) + 1, new_block)
+                block.size = size
+                block.free = False
+                return block.start
+        raise MemoryError("No sufficient free memory available")
+
+    def free(self, address):
+        for block in self.memory_blocks:
+            if block.start == address:
+                block.free = True
+                self._merge_free_blocks()
+                return
+        raise ValueError("Invalid address")
+
+    def _merge_free_blocks(self):
+        merged_blocks = []
+        previous_block = None
+        for block in self.memory_blocks:
+            if previous_block and previous_block.free and block.free:
+                previous_block.size += block.size
+            else:
+                if previous_block:
+                    merged_blocks.append(previous_block)
+                previous_block = block
+        if previous_block:
+            merged_blocks.append(previous_block)
+        self.memory_blocks = merged_blocks
+
+# Example usage
+if __name__ == "__main__":
+    allocator = FirstFitAllocator(1024)  # Initialize memory allocator with 1024 units of memory
+
+    # Allocate memory blocks
+    addr1 = allocator.allocate(100)
+    print(f"Allocated 100 units at address {addr1}")
+
+    addr2 = allocator.allocate(200)
+    print(f"Allocated 200 units at address {addr2}")
+
+    addr3 = allocator.allocate(50)
+    print(f"Allocated 50 units at address {addr3}")
+
+    # Free a memory block
+    allocator.free(addr1)
+    print(f"Freed 100 units from address {addr1}")
+
+    # Allocate another block to see the effect of first-fit allocation
+    addr4 = allocator.allocate(150)
+    print(f"Allocated 150 units at address {addr4}")
+```
+
+### 4. Slab Allocation
+
+**Slab Allocation**:
+Divides memory into caches, each storing objects of a specific size.
+
+```python
+class Slab:
+    def __init__(self, object_size, num_objects):
+        self.object_size = object_size
+        self.num_objects = num_objects
+        self.free_objects = list(range(num_objects))
+        self.slab = [None] * num_objects
+
+class SlabAllocator:
+    def __init__(self):
+        self.caches = {}
+
+    def create_cache(self, object_size, num_objects):
+        self.caches[object_size] = Slab(object_size, num_objects)
+
+    def allocate(self, object_size):
+        if object_size not in self.caches:
+            raise MemoryError("No cache available for the requested object size")
+        slab = self.caches[object_size]
+        if not slab.free_objects:
+            raise MemoryError("No free objects available in the cache")
+        object_index = slab.free_objects.pop(0)
+        slab.slab[object_index] = True
+        return object_index
+
+    def free(self, object_size, object_index):
+        if object_size not in self.caches or object_index >= self.caches[object_size].num_objects:
+            raise ValueError("Invalid object size or index")
+        slab = self.caches[object_size]
+        slab.slab[object_index] = None
+        slab.free_objects.append(object_index)
+
+# Example usage
+if __name__ == "__main__":
+    allocator = SlabAllocator()
+    allocator.create_cache(64, 10)  # Create a cache for 64-byte objects with 10 objects
+    allocator.create_cache(128, 5)  # Create a cache for 128-byte objects with 5 objects
+
+    # Allocate objects from the caches
+    obj1 = allocator.allocate(64)
+    print(f"Allocated 64-byte object at index {obj1}")
+
+    obj2 = allocator.allocate(128)
+    print(f"Allocated 
+
+128-byte object at index {obj2}")
+
+    # Free objects back to the caches
+    allocator.free(64, obj1)
+    print(f"Freed 64-byte object at index {obj1}")
+
+    allocator.free(128, obj2)
+    print(f"Freed 128-byte object at index {obj2}")
+
+    # Allocate another object to see the effect of slab allocation
+    obj3 = allocator.allocate(64)
+    print(f"Allocated 64-byte object at index {obj3}")
+```
+
+### Summary
+
+Here are the implementations for various methods to solve internal fragmentation:
+
+1. **Variable-Size Allocation (Best-Fit)**: Allocates the smallest block that is large enough for the request.
+2. **Sub-Page Allocation**: Divides pages into smaller blocks to better match the size of the requests.
+3. **Heap Management Algorithms (First-Fit)**: Uses the first-fit strategy to allocate memory blocks.
+4. **Slab Allocation**: Divides memory into caches, each storing objects of a specific size, to manage memory more efficiently.
